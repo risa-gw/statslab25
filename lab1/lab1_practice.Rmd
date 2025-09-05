@@ -1,0 +1,77 @@
+---
+title: "Lab 1 Practice"
+author: "Your Name Here"
+date: "`r Sys.Date()`"
+output: pdf_document
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part 1: Set up your work environment
+
+1. Create a folder for this class.
+
+2. Create a project for this class in that folder.
+
+3. Put this RMarkdown file into that folder.
+
+## Part 2: Equations practice
+
+Type the equation for the mean in LaTeX code so that it prints on a new line.
+
+<p align="center">
+
+![Equation for Mean](graph/mean_formula){width="50%"}
+
+</p>
+
+## Part 3: Knitting 
+
+1. Try to knit this document as is.
+
+2. Now create a new `R` chunk and edit the chunk options so that it is included in the knitted PDF output. Try knitting again to make sure it worked. 
+
+## Part 4: Write a function
+
+Write a function that tells you whether an input is between 6 and 36. (hint - the `ifelse()` command might be helpful here -- look it up in the console to see how it works) 
+
+Uncomment these lines to test your function
+
+```{r}
+#your_function_name(4)
+#your_function_name(30)
+```
+
+## Part 5: Practicing tidyverse commands
+
+1. Load in the `tidyverse` package. 
+
+2. Load in a dataset of LGBTQ movies. This data is from [TidyTuesdays](https://github.com/rfordatascience/tidytuesday), which is a cool source to poke around if you're looking for interesting (and already cleaned -- huge plus) datasets!
+
+```{r}
+# loading in data
+lgbtq_movies <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-06-25/lgbtq_movies.csv')
+```
+
+3. How many rows and columns are in this dataset? 
+
+4. Create a dataset of the top 10 most popular (`popularity`) Spanish language (`es`) LGBTQ movies.
+
+5. Create a variable that contains the average rating for a movie only if it has more than 100 votes (the ratings for each movie can be found in the `vote_average` column). Otherwise this variable should be `NA`. 
+
+## Part 6: Summary statistics 
+
+1. Which movies have higher ratings on average -- those released in the 20th century or those released in the 21st century?
+
+2. Create a dataset of summary statistics by language that contains: 
+    
+    (i) The earliest release date of an LGBTQ movie in that language
+    
+    (ii) The latest release date of an LGBTQ movie in that language
+    
+    (iii) The average rating of LGBTQ movies in that language
+
+What language was the earliest LGBTQ film made in?
