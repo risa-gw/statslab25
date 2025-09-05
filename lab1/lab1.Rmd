@@ -432,7 +432,7 @@ A typical data science project starts with data cleaning ("tidying"). In practic
 
 -   Comma-separated files (.csv) are the most common data files.
 
--   Here I use the built-in function `read.csv()` to load .csv data files. Be sure to have the correct **working directory** (i.e., path of the folder where files are stored) before reading data.
+-   Here I use the built-in function `read.csv()` to load .csv data files. Be sure to have the correct **working directory** (i.e., path of the folder where files are stored) before reading data. You can check your working directory by using the `getwd()` command and you can change it using `setwd()`.
 
 ```{r import csv}
 ## load csv files
