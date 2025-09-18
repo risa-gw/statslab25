@@ -1,0 +1,83 @@
+---
+title: "Your Latex Template for Replication"
+subtitle: "Subtitle"
+author: "Your Name"
+date: "Date"
+fontsize: 12
+indent: TRUE
+output:
+  pdf_document:
+    keep_tex: TRUE
+    latex_engine: xelatex
+bibliography: references.bib
+csl: american-sociological-association.csl
+link-citations: TRUE
+citeproc: TRUE
+urlcolor: blue
+header-includes: 
+ - \usepackage{setspace}\doublespacing
+ - \usepackage{indentfirst}
+reference-section-title: References
+---
+\pagenumbering{gobble} 
+\centerline{}
+\pagenumbering{arabic}
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+# Introduction
+
+This document provides the basic RMarkdown template using LaTeX for the final replication project and (hopefully) your future work. There are also lots of RMarkdown resources online that you should feel free to reference, such as [this page](https://rstudio.github.io/cheatsheets/html/rmarkdown.html) and [this cheatsheet](https://rmarkdown.rstudio.com/lesson-15.HTML). 
+
+## Second Layer
+
+This is the second layer of Introduction. You can keep creating deeper layers with more hashtags in front of the title. 
+
+# Mathematical Equations
+
+* There are two modes for mathematical expressions: the **inline mode** and the *display mode*. The first one is used to write formulas that are part of a text. The second one is used to write expressions that are on separate lines.
+
+* For example, to type an inline equation for calculating sample mean: $\hat{\mu} = \bar{y} = \frac{\sum_{i = 1}^{n}y_i}{n}$
+
+* Or type equation 1 in display mode using:
+
+$$
+\bar{y} = \frac{y_1 + y_2 + y_3 + ... + y_n}{n} = \frac{\sum_{i = 1}^{n} y_i}{n}
+(\#eq:mean)
+$$
+   
+* You can then refer to the equation in text using `\@ref(eq:mean)`
+
+* You can always search symbols you don't know the LaTeX code for or use an online LaTeX generator such as this [one](https://latexeditor.lagrida.com/)
+
+# Figures
+
+You can customize how your figures appear with the header of the code chunk, or with global options in the `knitr::opts_chunk$set()` commands above. 
+
+```{r, fig.align="center", fig.width=5, fig.height=3, fig.cap='Example plot title'}
+# load in tidyverse and ggplot
+pacman::p_load(
+  tidyverse,
+  pacman
+)
+
+# plot using an example dataset
+iris %>%
+  ggplot(aes(x = Sepal.Length, y = Sepal.Width)) + 
+  geom_point()
+```
+
+# Citations in RMarkdown
+
+* There is a .bib file in the GitHub "Final Project" folder that has the paper. You should input your references there. If you use a reference software, such as Zotero or Mendeley, there are options to export a bib file from it for your project or specific files as well.
+
+* To cite an article, write `@article_key` such as @mandel_going_2016 or for parenthesis [@mandel_going_2016, p. 1045]
+
+* To edit the citation style, change the citation language style (CSL) specified in the YAML header. 
+
+* RMarkdown will automatically add a references section at the end of your document. 
+
+* For more information on RMarkdown references, see guides [here](https://bookdown.org/yihui/bookdown/citations.html) and [here](https://bookdown.org/yihui/rmarkdown-cookbook/bibliography.html)
