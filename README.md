@@ -11,11 +11,11 @@ Lab materials for NYU's SOC-GA 2332 Introduction to Statistics, Fall 2025
 + Demonstrate Law of Large Numbers and Central Limit Theorem with simulations
 + Visualizations with `ggplot2` package
 
-### Lab 3 Hypothesis Testing and Statistical Significance
+### Lab 3: Hypothesis Testing and Statistical Significance
 + One sample and two sample t-tests
 + One-tailed and two-tailed t-tests
 + Calculating p-values
 
 ### Final Project
-+ [Overleaf template](https://www.overleaf.com/project/68b871671f443b326e4b55ca) **Please do not edit it**; instead, select it and copy it to **your own archive** for your future use.
 + RMarkdown template
++ [Overleaf template](https://www.overleaf.com/project/68b871671f443b326e4b55ca) **Please do not edit it**; instead, select it and copy it to **your own archive** for your future use.
