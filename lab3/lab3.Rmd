@@ -19,7 +19,7 @@ fontsize: 24pt
 - **Final Project** 
     - Progress steps will be built into the problem sets 
     - Will go over some steps for getting started in the next lab
-    - Intro to [Overleaf](https://www.overleaf.com/project/68b871671f443b326e4b55ca) (+ RMarkdown template)
+    - Intro to [Overleaf](https://www.overleaf.com/read/fwnymhcgwthf#8f643a) (+ RMarkdown template)
 
 ```{r setup, include = T, message = F, warning = F}
 knitr::opts_chunk$set(echo = TRUE)
