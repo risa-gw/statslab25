@@ -21,6 +21,11 @@ Lab materials for NYU's SOC-GA 2332 Introduction to Statistics, Fall 2025
 + Cumulative Distribution Function (CDF)
 + Intro to IPUMS and data extraction for final project
 
+### Lab 5: Regression
++ Bivariate OLS regression in R
++ Simulations of OLS regression
++ Interaction terms
+
 ### Final Project
 + RMarkdown template
 + [Overleaf template](https://www.overleaf.com/read/fwnymhcgwthf#8f643a) **Please do not edit it**; instead, select it and copy it to **your own archive** for your future use.
