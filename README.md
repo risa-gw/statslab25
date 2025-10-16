@@ -31,11 +31,12 @@ Lab materials for NYU's SOC-GA 2332 Introduction to Statistics, Fall 2025
 + Confounding variables
 + Interactions with dummy variables
 
-### Lab 7: Multivariate Regression, Variance Testing
+### Lab 7: Multivariate Regression, Missing Data
 + Types of multivariate relationships
 + Homoskedasticity violations
 + Robust standard error
-+ F-statistics and ANOVA testing
++ Different types of missingness (MCAR, MAR, MNAR)
++ Listwise deletion, imputation, multiple imputation
 
 ### Final Project
 + RMarkdown template
