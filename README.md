@@ -48,6 +48,12 @@ Lab materials for NYU's SOC-GA 2332 Introduction to Statistics, Fall 2025
 + Linear Probability Models
 + Logistic Regressions
 
+### Lab 10: Logistic Regression Interpretation & Model Comparison
++ Reading logistic regression tables
++ Odds and Odds Ratios
++ F-statistic
++ ANOVA tests
+
 ### Final Project
 + RMarkdown template
 + [Overleaf template](https://www.overleaf.com/read/fwnymhcgwthf#8f643a) **Please do not edit it**; instead, select it and copy it to **your own archive** for your future use.
