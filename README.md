@@ -54,6 +54,13 @@ Lab materials for NYU's SOC-GA 2332 Introduction to Statistics, Fall 2025
 + F-statistic
 + ANOVA tests
 
+### Lab 11: Categorical Variables & Logistic Regression Extended
++ Contingency tables 
++ Chi-squared test 
++ Ordered logistic regression
++ Multinomial logistic regression
++ Conditional logistic regression
+
 ### Final Project
 + RMarkdown template
 + [Overleaf template](https://www.overleaf.com/read/fwnymhcgwthf#8f643a) **Please do not edit it**; instead, select it and copy it to **your own archive** for your future use.
