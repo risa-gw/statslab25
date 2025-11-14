@@ -1,0 +1,612 @@
+---
+title: "SOC-GA 2332 Intro to Stats Lab 11"
+author: "Risa Gelles-Watnick"
+date: "11/14/2025"
+output:
+  pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+## load package
+pacman::p_load(
+  tidyverse, # general tidy r commands
+  stargazer, # regression tables
+  psych, # to summarize/explore datasets
+  janitor, # frequency tables, data cleaning
+  effects, # plotting predicted probabilities
+  MASS, # ordered logit models
+  nnet, # multinomial logit regressions
+  ggpubr, # showing multiple plots at once
+  survival # conditional logit models
+)
+
+# telling R which package to draw commands from 
+conflicted::conflicts_prefer(dplyr::select)
+conflicted::conflicts_prefer(stats::chisq.test)
+
+## load data
+load("data/support_level_df.RData")
+```
+  
+# Part 0: Logistics
+
+* **Problem Set #3** is due next Friday (11/21 @ 11:59pm)
+* Agenda
+    + Contingency tables 
+    + Chi-squared test 
+    + Ordered logistic regression
+    + Multinomial logistic regression
+    + Conditional logistic regression
+* Next lab we will go over concepts from the longitudinal data analysis slides
+
+# Part 1: Bi-variate Associations (Contingency Tables)  
+
+For today, we will use a dataset about same-sex marriage support. This dataset has three support levels (1 = Oppose, 2 = Neutral, 3 = Support) instead of a binary outcome.
+
+```{r}
+# explore the dataset
+psych::describe(support_df)
+```
+
+
+*Question:* What is a contingency table? What is it used for?
+
+
+
+In `R`, you can create a contingency table by using the `table()` function and input the two categorical variables you are interested in. To conduct a chi-square test of independence, simply use the function `chisq.test(your_contingency_table)`. 
+
+```{r chisquare, warning=FALSE, message=FALSE}
+
+## create variables for contingency tables
+support_df <- support_df %>%
+  mutate(## convert dummies to categorical variables
+         gender = ifelse(female == 0, "male", "female"),
+         race = ifelse(black == 1, "black", "white"))
+
+## simple contingency table and chi-square test for support levels and race
+t1 <- table(support_df$support_level, support_df$race)
+t1
+chisq.test(t1)
+
+# can do this same test with the janitor package (works better with tidyr and provides more customization options)
+support_df %>% 
+  janitor::tabyl(support_level, race) %>% 
+  janitor::chisq.test()
+```
+
+*Question:* What is the Chi-squared test testing for? What is the null and alternative hypotheses?
+
+
+*Question:* What conclusion do we draw from this Chi-squared test?
+
+
+*Question:* If support for same-sex marriage is dependent on race, does this mean race is dependent on support for same-sex marriage?
+
+### Quick R tangent
+
+Notice that both the `janitor` package and base R (`stats` package) have a `chisq.test()` command. There are many packages that have commadns that share a name (that don't always do the same thing!). Make sure you know which package R is drawing commands from. 
+
+A simple way to specify the package you want to call the command from is with the double colon `::`. Another way to do this is by using the `conflict_prefer()` command from the `conflicted` package to globally set which package you want R to draw a certain command from. 
+
+For example:
+
+```{r}
+# specifying to use chisq.test() command from the janitor package
+support_df %>% 
+  janitor::tabyl(support_level, race) %>% 
+  janitor::chisq.test()
+
+# telling R to always (in this script) use the chisq.test() command from the base R stats package
+conflicted::conflict_prefer("chisq.test", "stats")
+```
+
+### End R tangent
+
+*Question:* What are the three types of distributions you can find in contingency tables? 
+
+* **Joint distribution:** calculates probabilities of events happening together (i.e. what percent of the data is in each cell). For example, what percent of the data is Black people who support same-sex marriage? Remember, 3 is support.
+
+```{r}
+support_df %>% 
+  tabyl(support_level, race) %>% 
+  adorn_percentages("all") %>% # add row and column percentages (i.e. percentage of data in each cell)
+  adorn_totals("row") %>% # add a total row
+  adorn_ns() # add Ns to table
+```
+14.8% of the data is Black people who support same-sex marraige. 
+
+* **Marginal distribution:** calculates probabilities of individual events (i.e. what percentage of the data is in each row or column). For example, how many people support same-sex marriage?
+
+```{r}
+support_df %>% 
+  tabyl(support_level)
+```
+51.3% of people support same-sex marriage. 
+
+* **Conditional distribution:** calculates probabilities of events given specific conditions (i.e. what percentage of a given row is in a column, or vice versa). For example, what percentage of Black people support same-sex marriage?
+
+```{r}
+support_df %>% 
+  tabyl(support_level, race) %>% 
+  adorn_percentages("col") %>% # add column percentages (i.e. percentage of column in each row)
+  adorn_totals("row") %>% # add a total row
+  adorn_ns() # add Ns to table
+```
+50.3% of Black people support same-sex marriage. 
+
+Another way to think about independence is that if the product of the marginal distributions of each variable equal their joint distribution, then the two variables are independent (with matrix multiplication). This is essentially what the chi-squared test is testing. 
+
+## Part 1 Exercise (10 minutes)
+
+Recall that the $\chi^2$ statistic is defined as: 
+
+$$\chi^2 = \sum\frac{(f^o - f^e)^2}{f^e},$$
+where $f^o$ is the observed frequency and $f^e$ is the expected frequency.  
+
+You are given the following contingency table of support levels and gender: 
+
+```
+   Cell Contents
+|-------------------------|
+|                       N |
+|              Expected N |
+|           N / Row Total |
+|           N / Col Total |
+|         N / Table Total |
+|-------------------------|
+ 
+Total Observations in Table:  1000 
+
+                         | support_df$gender 
+support_df$support_level |    female |      male | Row Total | 
+-------------------------|-----------|-----------|-----------|
+                       1 |       105 |       147 |       252 | 
+                         |   123.228 |   128.772 |           | 
+                         |     0.417 |     0.583 |     0.252 | 
+                         |     0.215 |     0.288 |           | 
+                         |     0.105 |     0.147 |           | 
+-------------------------|-----------|-----------|-----------|
+                       2 |       109 |       126 |       235 | 
+                         |   114.915 |   120.085 |           | 
+                         |     0.464 |     0.536 |     0.235 | 
+                         |     0.223 |     0.247 |           | 
+                         |     0.109 |     0.126 |           | 
+-------------------------|-----------|-----------|-----------|
+                       3 |       275 |       238 |       513 | 
+                         |   250.857 |   262.143 |           | 
+                         |     0.536 |     0.464 |     0.513 | 
+                         |     0.562 |     0.466 |           | 
+                         |     0.275 |     0.238 |           | 
+-------------------------|-----------|-----------|-----------|
+            Column Total |       489 |       511 |      1000 | 
+                         |     0.489 |     0.511 |           | 
+-------------------------|-----------|-----------|-----------|
+
+```
+
+1. How do you calculate the expected frequency for each cell? Verify your answer with the expected frequencies in the table.
+
+
+2. State your null and alternative hypotheses of the $\chi^2$ test;
+
+3. Calculate the $\chi^2$ statistic using the formula above;
+
+
+4. Calculate the p-value of your test statistic. *Hint*: (a) recall that the degree of freedom is calculated by $\text{df} =(\text{nrow}-1)\cdot(\text{ncol}-1)$, (b) search `pchisq`   
+
+# Part 2: Ordered Logit Regression Model  
+
+## 2.1 Model Setup
+
+* *Question:* When do we use an ordered logistic regression? 
+
+* Think back to when we were talking about p-values. We said one way of defining a p-value is the value of the cumulative probability function of the null t-distribution from your observed t-statistic to infinity. In other words, the total probability under the null t-distribution from your t-statistic to infinity (times 2, for a two-tailed p-value).
+
+* For the ordered logit regression model, we're still using a cumulative probability function, but this time on a logistic distribution rather than a t-distribution. 
+
+* The cumulative probability for individual $i$’s choice up to response level $j$ is given by:  
+
+$$C_{i,j} = Pr(y_i \le j) = \sum^{j}_{k = 1}Pr(y_i = k) = \frac{1}{1 + exp(-(\phi_j - x_i\beta))} \\j = 1, 2, ..., J$$
+  
+  + $y_i$ is the outcome for individual i 
+  + $j$ is the category you're interested in. So $Pr(y_i \le j)$ is the probability that individual i is in a category lower than or equal to j
+  + $J$ is the "top" category in your data
+  + $k$ is an index that assigns a number to each category. So summing from k = 1 to j runs through every category "below" and including j 
+  + $x_i$ is a vector of variables that affect y
+  + $\beta$ is a vector of coefficients that go with those variables
+  + $\phi_j$ is the cutpoint or threshold between cumulative probabilities, i.e. the point in the cumulative probability distribution that separates category j from category j + 1 
+  
+* So in sum, this equation is looking at how much probability there is that an individual i falls into a category j or lower
+  
+
+* This specific form of cumulative probability stems from the Sigmoid function:
+
+$$
+f(x) = \frac{1}{1+exp(-x)}
+$$
+which is monotonically increasing with reference to $x$
+
+* Here we replace $x$ by the linear combination of category-specific cutpoints $\phi_j$ and individual-specific characteristics and their coefficients
+  + Intuitively, we would use $\frac{1}{1 + exp(-(\phi_j + x_i\beta))}$ as in binary logistic model
+  + We use $\frac{1}{1 + exp(-(\phi_j - x_i\beta))}$ because the model was specified in this way at the time of invention -- path dependence
+  + It only changes the sign of $\beta$, but not its magnitude
+  
+* As the Sigmoid function is monotonically increasing, we will have:
+  + $\phi_0 < \phi_1 < ... < \phi_J$
+  + $\phi_0$ to be $-\infty$ and $\phi_J$ to be $\infty$. 
+
+* The probability of being in response category $j$ for the same individual $i$ is:  
+
+$$
+\begin{aligned}
+Pr(y_i = j) &= C_{i,j} - C_{i,j-1} \\
+&= Pr(y_i \leq j) - Pr(y_i \leq j-1) \\
+&= \frac{1}{1 + exp(-\phi_j + x_i\beta)} - \frac{1}{1 + exp(-\phi_{j-1} + x_i\beta)}
+\end{aligned}
+$$
+
+* $\phi_j$ and $\beta$ are estimated using Maximum Likelihood Estimation (MLE). MLE basically tries to find the parameters of a function that maximize the probability of seeing your observed data. 
+
+* In `R`, you can estimate a ordered logit model using the `polr()` function from the `MASS` package. 
+
+```{r ordered logit}
+## estimate ordered logit model
+ologit1 <- polr(support_level ~ eduy, data = support_df, method="logistic")
+ologit2 <- polr(support_level ~ eduy + age, data = support_df, method="logistic")
+ologit3 <- polr(support_level ~ eduy + age + female, data = support_df, method="logistic")
+ologit4 <- polr(support_level ~ eduy + age + female + black, data = support_df, method="logistic")
+
+## stargazer
+stargazer(ologit1, ologit2, ologit3, ologit4, type="text")
+
+```
+
+## 2.2 Coefficients Interpretation  
+
+* In ordered logit models, the coefficients capture the effect on the log odds of moving to the "higher rank". The exponentiated coefficients indicate the **ratio between the odds** after and before the given predictor increased by one unit.
+
+* The odds here is defined as the probability of being in a higher category divided by the probability of being in the current or lower category.
+
+$$
+\begin{aligned}
+\frac{\frac{Pr(y_i > j|X_z + 1)}{Pr(y_i \le j|X_z + 1)}}{\frac{Pr(y_i > j|X_z)}{Pr(y_i \le j|X_z)}} &= \frac{\frac{1-Pr(y_i \le j|X_z + 1)}{Pr(y_i \le j|X_z + 1)}}{\frac{1-Pr(y_i \le j|X_z)}{Pr(y_i \le j|X_z)}} \\
+&=  \frac{exp(-\phi_j + (x_z+1)\beta_z)}{exp(-\phi_j + x_z\beta_z)}\\
+&= exp(\beta_z)
+\end{aligned} 
+$$
+
+* To get these odds ratios in R, use `exp(coef(your_model_object))` (same as the code you use for getting odds ratio for logistic models).
+
+```{r exponentiated, warning=FALSE, message=FALSE}
+## odds Ratio
+exp(coef(ologit4))
+```
+
+* Note that the term $exp(\beta_z)$ does not depend on $j$. In other words, the effect of $X_z$ on $y_i$ moving to a higher category is the same across $j$. The effect of moving from the lowest category to one higher is the same as from the second highest category to the highest category. This is **the proportional odds assumption/parallel regression assumption**
+
+* *Question:* How would we interpret the coefficient on education? 
+
+## 2.3 Plot Predicted Probability
+
+```{r prediction, warning=FALSE, message=FALSE}
+
+## dataframe for prediction
+predicted_ord <- as.data.frame(Effect(c("eduy"), 
+                                  ologit4,
+                                  xlevels = list(
+                                    eduy = seq(3, 24, by = 0.5),
+                                    age = mean(support_df$age),
+                                    black = mean(support_df$black),
+                                    female = mean(support_df$female))
+                                  ), 
+                           level=95)
+
+
+## get predicted yhat, pivot to long form
+predicted_y_ord <- predicted_ord %>% 
+  dplyr::select(eduy, prob.X1, prob.X2, prob.X3) %>%
+  pivot_longer(!eduy, names_to = "level_y", values_to = "yhat") 
+
+## get predicted upper CI of yhat, pivot to long form
+predicted_upr_ord <- predicted_ord %>% 
+  dplyr::select(eduy, U.prob.X1, U.prob.X2, U.prob.X3) %>%
+  pivot_longer(!eduy, names_to = "level_upr", values_to = "upr") %>%
+  dplyr::select(-eduy, -level_upr)
+
+## get predicted lower CI of yhat, pivot to long form
+predicted_lwr_ord <- predicted_ord %>% 
+  dplyr::select(eduy, L.prob.X1, L.prob.X2, L.prob.X3) %>%
+  pivot_longer(!eduy, names_to = "level_lwr", values_to = "lwr") %>%
+  dplyr::select(-eduy, -level_lwr)
+
+## combine to one df for plotting
+predicted_plot_ord <- cbind(predicted_y_ord, predicted_upr_ord, predicted_lwr_ord)
+
+## plot
+figure1 <- predicted_plot_ord %>% 
+  ggplot(aes(x = eduy, y = yhat, 
+             ymax = upr, ymin = lwr, 
+             fill = as.factor(level_y),
+             linetype = as.factor(level_y))) + 
+  geom_line() + 
+  geom_ribbon(alpha = 0.3) +
+  labs(title = "Ordered Logit",
+       x = "Years of Education",
+       y = "Predicted Probability") +
+  scale_fill_manual(name = "",
+                    values = c("#3182bd", "#31a354", "#de2d26"), 
+                    label = c("Disagree", "Neutral", "Agree")) +
+  scale_linetype_manual(name = "", 
+                        values = c("dashed", "dotdash", "solid"), 
+                        label = c("Disagree", "Neutral", "Agree")) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+figure1
+```
+
+# An Interlude: The Softmax Function
+
+* So far, our logistic regression formulas (for binary logits and multinomial ordered logits) have been based on the sigmoid function:
+
+$$
+\frac{1}{1+e^{-x}}
+$$
+
+* Our next two types of logistic regression are going to be based on the softmax function. The general softmax form is:
+
+$$
+\frac{e^{z_k}}{\sum^k_{j=1}{e^{z_j}}}
+$$
+
+* Softmax vs. sigmoid
+    + The softmax function has a similar but not identical shape to the sigmoid function. 
+    + The key difference is that the sigmoid function is for binary classification (ex. binary logistic regression, ordered multinomial regression), while the softmax function is for multiclass classification (ex. multinomial logistic regression, conditional logistic regression). 
+    + In the special case of multinomial logistic regression where the number of response options = 2, we can show algebraically that our multinomial softmax regression formula reduces down to the sigmoid binary regression formula
+
+* The softmax function is often used in deep learning as the last layer of a neural network which transforms a vector into the probability that the input falls into each of the desired classification categories. 
+
+# Part 3: Multinomial Logit Regression Model
+
+## 3.1 Model Setup
+
+* Multinomial logit model can be used to predict the probability of a response falling into a certain category among $K$ categories that are *not ordered*. 
+
+* We think of the problem as fitting $K-1$ independent binary logit models, where one of the possible outcomes is defined as a pivot, and the $K-1$ outcomes are compared with the pivot outcome.
+  + A binary logistic model is a special case of multinomial logit model
+  + Recall a binary model has the form:
+  
+$$
+  \begin{aligned}
+  \text{logit}(Pr(Y_i=1)) &= \log \left( \frac{Pr(Y_i=1)}{1-Pr(Y_i=1)} \right) \\
+  &= \log \left( \frac{Pr(Y_i=1)}{Pr(Y_i = 0)} \right) \\
+  &= \alpha_1 + \beta_1 X_i
+  \end{aligned}
+$$
+  
+  + which essentially compares the outcome ($Y_i = 1$) with the pivot, reference outcome ($Y_i = 0$)
+
+* Now in parallel, with multiple $K$ outcomes, the $K-1$ non-pivotal outcomes is assumed to be (assuming the first group is the pivot one): 
+
+$$
+\begin{aligned}
+\log \left( \frac{Pr(Y_i=2)}{Pr(Y_i = 1)} \right) &= \alpha_2 + \beta_2 X_i \\
+\log \left( \frac{Pr(Y_i=3)}{Pr(Y_i = 1)} \right) &= \alpha_3 + \beta_3 X_i \\
+&...
+\\
+\log \left( \frac{Pr(Y_i=K)}{Pr(Y_i = 1)} \right) &= \alpha_{K} + \beta_{K} X_i
+\end{aligned}
+$$
+
+* Rewriting each probability, we get:
+
+$$
+\begin{aligned}
+Pr(Y_i=2) &= \exp(\alpha_2 + \beta_{2} X_i) \times Pr(Y_i = 1) \\
+Pr(Y_i=3) &= \exp(\alpha_3 + \beta_{3} X_i) \times Pr(Y_i = 1) \\
+&...
+\\
+Pr(Y_i=K) &= \exp(\alpha_{K} + \beta_{K} X_i) \times Pr(Y_i = 1) 
+\end{aligned}
+$$
+
+* As $\sum_{k=1}^{K}Pr(Y_i=k) = 1$, we get:
+
+$$
+\begin{aligned}
+Pr(Y_i=1) &= \frac{1}{1+\sum_{k=2}^{K} \exp(\alpha_k + \beta_{k}X_i)} \\
+Pr(Y_i=2) &= \frac{\exp(\alpha_k + \beta_2X_i)}{1+\sum_{k=2}^{K} \exp(\alpha_k + \beta_{k}X_i)} \\
+...\\
+Pr(Y_i=K) &= \frac{\exp(\alpha_k + \beta_2X_i)}{1+\sum_{k=2}^{K} \exp(\alpha_k + \beta_{k}X_i)}
+\end{aligned}
+$$
+  
+* Multinomial logit model can be estimated using the `multinom()` function from the `nnet` package.  
+
+```{r multinom, warning=F, message=F}
+
+## estimate multinomial logit models
+mlogit1 <- multinom(support_level ~ eduy, data = support_df)
+mlogit2 <- multinom(support_level ~ eduy + age, data = support_df)
+mlogit3 <- multinom(support_level ~ eduy + age + female, data = support_df)
+mlogit4 <- multinom(support_level ~ eduy + age + female + black, data = support_df)
+
+stargazer(mlogit1, mlogit2, mlogit3, mlogit4, 
+          type="text")
+```
+
+## 3.2 Coefficients Interpretation
+
+* The exponentiated regression coefficients from the multinomial logit model can be interpreted in terms of **relative risk ratios**. This makes the interpretation of the coefficients a bit more intuitive, compared to the coefficients from either binary or ordinal logistic regression.  
+
+$$
+\begin{aligned}
+\text{Relative Risk Ratio} &= \frac{\frac{Pr(Y_i=k|x_i + 1)}{Pr(Y_i=1|x_i+1)}}{\frac{Pr(Y_i=k|x_i)}{Pr(Y_i=1|x_i)}} \\
+&= \frac{\exp(\alpha_k)\exp \left[\beta_k (x_i + 1) \right]}{\exp(\alpha_k)\exp(\beta_kx_i)} \\
+& =\exp(\beta_k)
+\end{aligned}
+$$  
+  
+* The interpretation for $\beta_k$ is: holding all other factors constant, for one unit increase of the predictor, the relative risk of falling into the category $k$, compared with falling into the baseline category, increases by a factor of $exp(\beta_k)$ (note: multiplicative!).
+
+* To get the relative risk ratios in R, use `exp(coef(your_model_object))` (same as the code you use for getting odds ratio for logistic models).
+
+```{r exponentiate}
+## get relative risk ratios for the 4th model
+exp(coef(mlogit4))
+```
+
+* *Question:* How would we interpret the coefficient on education in the first row?
+
+## 3.3 Plot Predicted Probabilities
+  
+* We can also plot the predicted effect for multinomial logistic models. For example, we can plot the predicted probabilities for the three possible outcomes (support, neutral, oppose) using the `Effect()` function.
+
+```{r plot predictions, warning=FALSE, message=FALSE}
+# Get predicted y values
+predicted_mul <- as.data.frame(Effect(c("eduy"), 
+                                  mlogit4,
+                                  xlevels = list(
+                                    eduy = seq(3, 24, by = 0.5),
+                                    age = mean(support_df$age), 
+                                    black = mean(support_df$black), 
+                                    female = mean(support_df$female))
+                                  ), 
+                           level=95)
+
+# Get predicted yhat, pivot to long form
+predicted_y_mul <- predicted_mul %>% 
+  dplyr::select(eduy, prob.X1, prob.X2, prob.X3) %>%
+  pivot_longer(!eduy, names_to = "level_y", values_to = "yhat") 
+
+# Get predicted upper CI of yhat, pivot to long form
+predicted_upr_mul <- predicted_mul %>% 
+  dplyr::select(eduy, U.prob.X1, U.prob.X2, U.prob.X3) %>%
+  pivot_longer(!eduy, names_to = "level_upr", values_to = "upr") %>%
+  dplyr::select(-eduy, -level_upr)
+
+# Get predicted lower CI of yhat, pivot to long form
+predicted_lwr_mul <- predicted_mul %>% 
+  dplyr::select(eduy, L.prob.X1, L.prob.X2, L.prob.X3) %>%
+  pivot_longer(!eduy, names_to = "level_lwr", values_to = "lwr") %>%
+  dplyr::select(-eduy, -level_lwr)
+
+# Combine to one df for plotting
+predicted_plot_mul <- cbind(predicted_y_mul, predicted_upr_mul, predicted_lwr_mul)
+
+# Plot
+figure2 <- predicted_plot_mul %>% 
+  ggplot(aes(x = eduy, y = yhat, 
+             ymax = upr, ymin = lwr, 
+             fill = as.factor(level_y),
+             linetype = as.factor(level_y))) + 
+  geom_line() + 
+  geom_ribbon(alpha = 0.3) +
+  labs(title = "Multinomial Logit",
+       x = "Years of Education",
+       y = "Predicted Probability") +
+  scale_fill_manual(name = "",
+                    values = c("#3182bd", "#31a354", "#de2d26"), 
+                    label = c("Disagree", "Neutral", "Agree")) +
+  scale_linetype_manual(name = "", 
+                        values = c("dashed", "dotdash", "solid"), 
+                        label = c("Disagree", "Neutral", "Agree")) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggarrange(figure1, figure2, ncol=2, common.legend = TRUE,
+          legend="right")
+
+```
+
+# Part 4: Conditional Logit Regression Model
+
+## 4.1 Model Setup
+
+* Conceptually, conditional logistic regressions calculate how much features of a certain outcome influence the probability of person i choosing that outcome compared with the other outcome options. You can also use these models with strata rather than individuals.
+    + Notice that this can be thought of as a type of fixed-effects model. We are calculating how much explanatory variables affect the probability of each outcome given a set of underlying individual traits that can also affect how much these explanatory variables matter  (individual fixed-effects).
+
+* For subject $i$ and response choice $j$, suppose there are $Q$ possible choices. Let $X_{ij}$ denote the predictors that affect whether $i$ will choose $j$ (which may depend on characteristics of both $i$ and $j$). 
+
+* The probability of person $i$ selecting option $j$ is:
+
+$$
+\begin{aligned}
+\pi_{ij} &= \frac{exp(\beta^{T}X_{ij})}{\sum_{q=1}^{Q} exp(\beta^{T}X_{iq})}
+\end{aligned}
+$$
+
+* This is in the form of a softmax function.
+
+* Conceptually, the numerator is calculating how much evidence there is that individual i will choose a particular category and the denominator adds up the evidence for each category that individual i will choose each of them. This makes all the probabilities sum to 1, which is logical (individual i has an 100% chance of picking any category at all).
+
+
+* Using the softmax function here has several advantages, including the linearity of the relative probability between $\pi_{ij}$ and $\pi_{iq}$
+
+$$log(\frac{\pi_{ij}}{\pi_{iq}}) = \beta^{T}X_{ij} - \beta^{T}X_{iq}$$
+
+* Conditional logit models can be estimated using the `clogit()` function from the `survival` package.  
+
+* To demonstrate this we'll use a simulated dataset that mimics the neighborhood choice example we talked about in class. Notice this data is in long form (meaning that each person is represented through 3 rows, one for each neighborhood). This is necessary to use the `clogit()` command.
+
+```{r}
+# load in data
+neighborhoods <- read.csv("data/neighborhoods.csv")
+```
+
+* This dataset contains both individual-level traits and neighborhood traits. 
+    + Individual
+        + **person_id**: identifies the person
+        + **income**: individual income
+        + **kids**: does the person have children
+        + **choice**: observed choice (1 if they chose the neighborhood, 0 if they didn't)
+    + Neighborhood
+        + **neigh_id**: identifies the neighborhood
+        + **trees**: neighborhood tree density
+        + **schools**: neighborhood school rating
+        + **price**:	average neighborhood rent
+
+```{r, warning=F, message=F}
+## estimate conditional logit model
+clogit_mod <-
+  clogit(choice ~ trees + schools + price + income*price + kids*schools + income,
+           strata(person_id),
+  data = neighborhoods
+)
+
+stargazer(clogit_mod,
+          type="text")
+```
+
+Notice that individual-level traits do not enter the model except as interaction terms. This is because they are "conditioned out" because we're only looking at the probability of choosing each neighborhood within person. Therefore, individual-level traits won't vary unless they're interacted with a neighborhood-level characteristic. 
+
+You can also use this model for matched data or data in stratum. 
+
+## 4.2 Coefficients Interpretation
+
+* Just like other logistic regressions, the coefficients in this model represent log odds. To get odds ratios, we exponentiate:
+
+```{r}
+## get odds for model 
+exp(coef(clogit_mod))
+```
+
+* These odds represent how much higher odds a given outcome has of being selected based on a one-unit increase in a certain feature of that outcome. 
+
+* *Question:* How would we interpret the coefficient on trees?
+
+# Exercise (10 min)
+
+How does age affect the likelihood that one will support same-sex marriage? Use `support_df` to investigate. 
+
+1. Pick one of the logistic regression models we have learned so far and use it to calculate the affect of age on probability of support of same-sex marriage. 
+
+
+2. Create a clean table of your regression. 
+
+
+3. Interpret your regression in 1-2 sentences.
+
+
+4. Plot a graph of the predicted probability of support for each age. 
