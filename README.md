@@ -66,6 +66,10 @@ Lab materials for NYU's SOC-GA 2332 Introduction to Statistics, Fall 2025
 + Fixed-effects model
 + Random-effects model
 
+### Lab 13: IPTW
++ Propensity scores
++ Inverse Probability of Treatment Weighting (IPTW)
+
 ### Final Project
 + RMarkdown template
 + [Overleaf template](https://www.overleaf.com/read/fwnymhcgwthf#8f643a) **Please do not edit it**; instead, select it and copy it to **your own archive** for your future use.
